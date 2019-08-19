@@ -25,6 +25,7 @@ __metaclass__ = type
 import errno
 import datetime
 import os
+import shutil
 import tarfile
 import tempfile
 import yaml
@@ -177,6 +178,15 @@ class GalaxyRole(object):
                 archive_url = self.src
 
             display.display("- downloading role from %s" % archive_url)
+            
+            tmp_path = "~/.ansible/roles/"
+            if not os.path.exists(tmp_path):
+                os.makedirs(tmp_path)
+            
+            cached_filename = tmp_path + os.path.basename(archive_url)
+            
+            if os.path.exists(cached_filename):
+                return cached_filename
 
             try:
                 url_file = open_url(archive_url, validate_certs=self._validate_certs)
@@ -186,6 +196,7 @@ class GalaxyRole(object):
                     temp_file.write(data)
                     data = url_file.read()
                 temp_file.close()
+                shutil.copy2(temp_file.name, cached_filename)
                 return temp_file.name
             except Exception as e:
                 display.error(u"failed to download the file: %s" % to_text(e))
